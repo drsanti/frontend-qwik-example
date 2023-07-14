@@ -1,0 +1,17 @@
+
+
+button {
+    @apply border border-gray-500/50 px-4 rounded-md w-24 h-8;
+}
+
+.counter {
+    @apply text-xl text-blue-400 py-4;
+}
+
+.container {
+    @apply flex flex-col h-screen justify-center items-center;
+}
+
+.container .wrapper {
+    @apply flex space-x-4;
+}

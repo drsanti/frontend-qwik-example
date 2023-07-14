@@ -1,112 +1,75 @@
-import { component$ } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
-
-import Counter from "~/components/starter/counter/counter";
-import Hero from "~/components/starter/hero/hero";
-import Infobox from "~/components/starter/infobox/infobox";
-import Starter from "~/components/starter/next-steps/next-steps";
-
+import { component$, useStore, $, useVisibleTask$ } from "@builder.io/qwik";
+import { BfsWsLink, type WsMessage } from "bfs-net-link";
+import "./index.css";
 export default component$(() => {
+  const wsStore = useStore({ id: "none", text: "not update", topic: "none" });
+
+  const store = useStore({ count: 0, t0: 0, rtt: "100 ms" });
+
+  const clientRef = { value: null as any };
+  const init = $(() => {
+    const uri = `ws://178.128.98.237:3000`; // OR wss://178.128.98.237:8080
+    const client = new BfsWsLink(uri);
+    clientRef.value = client as BfsWsLink;
+
+    client.on("ready", (e) => {
+      console.clear();
+      store.t0 = performance.now();
+      wsStore.id = e.id;
+      wsStore.topic = `${e.id}-data`;
+      // wsStore.topic = `share-data`;
+      client.subscribe(wsStore.topic);
+      client.publish(wsStore.topic, `${store.count}`);
+    });
+
+    client.on("message", (e: WsMessage) => {
+      wsStore.text = e.data;
+      if (e.id == wsStore.id) {
+        store.rtt = `rtt: ${(performance.now() - store.t0).toFixed(3)} ms`;
+      } else {
+        store.count = Number(e.data);
+        store.rtt = `sender: ${wsStore.id}`;
+      }
+    });
+  });
+
+  useVisibleTask$(({ cleanup }) => {
+    init();
+    cleanup(() => {
+      console.log("cleanup");
+    });
+  });
+
+  const sendToServer = $(() => {
+    store.t0 = performance.now();
+    clientRef.value?.publish(wsStore.topic, store.count);
+  });
+
+  const inc = $(() => {
+    store.count++;
+    sendToServer();
+  });
+  const dec = $(() => {
+    store.count--;
+    sendToServer();
+  });
+
   return (
-    <>
-      <Hero />
-      <Starter />
-
-      <div role="presentation" class="ellipsis"></div>
-      <div role="presentation" class="ellipsis ellipsis-purple"></div>
-
-      <div class="container container-center container-spacing-xl">
-        <h3>
-          You can <span class="highlight">count</span>
-          <br /> on me
-        </h3>
-        <Counter />
+    <main class="container">
+      <div class="wrapper">
+        <p class="client-id">client: {wsStore.id}</p>
+        <p class="text-topic">topic: {wsStore.topic}</p>
+        <p class="text-info">counter: {wsStore.text}</p>
+        <p class="text-rtt">{store.rtt}</p>
       </div>
-
-      <div class="container container-flex">
-        <Infobox>
-          <div q:slot="title" class="icon icon-cli">
-            CLI Commands
-          </div>
-          <>
-            <p>
-              <code>npm run dev</code>
-              <br />
-              Starts the development server and watches for changes
-            </p>
-            <p>
-              <code>npm run preview</code>
-              <br />
-              Creates production build and starts a server to preview it
-            </p>
-            <p>
-              <code>npm run build</code>
-              <br />
-              Creates production build
-            </p>
-            <p>
-              <code>npm run qwik add</code>
-              <br />
-              Runs the qwik CLI to add integrations
-            </p>
-          </>
-        </Infobox>
-
-        <div>
-          <Infobox>
-            <div q:slot="title" class="icon icon-apps">
-              Example Apps
-            </div>
-            <p>
-              Have a look at the <a href="/demo/flower">Flower App</a> or the{" "}
-              <a href="/demo/todolist">Todo App</a>.
-            </p>
-          </Infobox>
-
-          <Infobox>
-            <div q:slot="title" class="icon icon-community">
-              Community
-            </div>
-            <ul>
-              <li>
-                <span>Questions or just want to say hi? </span>
-                <a href="https://qwik.builder.io/chat" target="_blank">
-                  Chat on discord!
-                </a>
-              </li>
-              <li>
-                <span>Follow </span>
-                <a href="https://twitter.com/QwikDev" target="_blank">
-                  @QwikDev
-                </a>
-                <span> on Twitter</span>
-              </li>
-              <li>
-                <span>Open issues and contribute on </span>
-                <a href="https://github.com/BuilderIO/qwik" target="_blank">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <span>Watch </span>
-                <a href="https://qwik.builder.io/media/" target="_blank">
-                  Presentations, Podcasts, Videos, etc.
-                </a>
-              </li>
-            </ul>
-          </Infobox>
-        </div>
+      <div class="flex space-x-4">
+        <button class="btn-inc" onClick$={inc}>
+          +1
+        </button>
+        <button class="btn-dec" onClick$={dec}>
+          -1
+        </button>
       </div>
-    </>
+    </main>
   );
 });
-
-export const head: DocumentHead = {
-  title: "Welcome to Qwik",
-  meta: [
-    {
-      name: "description",
-      content: "Qwik site description",
-    },
-  ],
-};

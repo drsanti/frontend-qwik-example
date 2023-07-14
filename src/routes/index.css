@@ -1,0 +1,30 @@
+.container {
+    @apply flex flex-col h-screen justify-center items-center;
+}
+
+.wrapper{
+    @apply flex flex-col my-4 justify-center items-center;
+}
+
+.client-id {
+    @apply text-green-400 text-xl;
+}
+
+.text-info {
+    @apply text-blue-400 text-2xl;
+}
+
+.text-rtt {
+    @apply text-orange-400 text-xl;
+}
+.text-topic {
+    @apply text-yellow-200/80 text-sm;
+}
+
+.btn-inc {
+    @apply w-20 h-10 bg-green-700;
+}
+
+.btn-dec {
+    @apply w-20 h-10 bg-purple-700;
+}

@@ -1,0 +1,7 @@
+p{
+    @apply text-3xl text-yellow-200;
+}
+
+.container {
+    @apply h-screen mx-8;
+}
